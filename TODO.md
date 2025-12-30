@@ -272,3 +272,179 @@ Vercelでのデプロイ手順:
 | Phase 7: 機能統合 | ✅ 完了 | ストリーミング・履歴・UI/UX完了 |
 | Phase 8: テスト | ✅ 完了 | Vitest + Testing Library / 38テストパス |
 | Phase 9: デプロイ | ✅ 準備完了 | vercel.json・README.md作成済み / ユーザー側でGit push & Vercelデプロイ |
+
+---
+
+## Phase 10: 残タスク・改善項目
+
+コードレビューにより特定された改善項目（38件）を優先度別に整理。
+
+### 10.1 🔴 Critical（即座に対応必要）
+
+#### セキュリティ
+- [ ] **ユーザー認証システムの実装** - 現在全ユーザーが全会話にアクセス可能
+  - NextAuth.js または Clerk の導入
+  - `userId` フィールドをConversationモデルに追加
+  - 全APIエンドポイントでユーザー認証チェック
+
+- [ ] **XSS脆弱性の修正** (`components/chat/CodeBlock.tsx`)
+  - `dangerouslySetInnerHTML` の使用箇所
+  - DOMPurify によるサニタイズ追加
+
+- [ ] **APIレート制限の実装** (`app/api/`)
+  - DoS攻撃対策
+  - APIコスト管理
+  - `lib/rateLimit.ts` の作成
+
+### 10.2 🟠 High Priority（重要）
+
+#### API バリデーション
+- [ ] **チャットAPIの入力検証強化** (`app/api/chat/route.ts`)
+  - 空メッセージ・空白のみのチェック
+  - メッセージ長制限（10,000文字）
+  - 配列内の各メッセージの検証
+
+- [ ] **会話API入力検証** (`app/api/conversations/route.ts`, `[id]/route.ts`)
+  - タイトル長制限（200文字）
+  - 入力値のサニタイズ
+  - 型チェック強化
+
+#### Hooks
+- [ ] **useConversations のstale closure修正** (`hooks/useConversations.ts:60-73`)
+  - `deleteConversation` の依存配列問題
+  - `setCurrentConversation` のupdater関数使用
+
+- [ ] **useChat のレスポンス検証** (`hooks/useChat.ts:55`)
+  - 会話作成後の `response.ok` チェック
+  - `_id` の存在確認
+
+#### UX
+- [ ] **会話削除時の確認ダイアログ** (`components/sidebar/ConversationList.tsx`)
+  - 誤削除防止
+  - shadcn/ui AlertDialog の使用
+
+### 10.3 🟡 Medium Priority（中程度）
+
+#### ストリーミング・リソース管理
+- [ ] **AbortController によるストリーミングクリーンアップ** (`hooks/useChat.ts:78-89`)
+  - コンポーネントアンマウント時のリソース解放
+  - fetchリクエストのキャンセル対応
+
+- [ ] **JSONパースエラーのロギング** (`hooks/useChat.ts:111-113`)
+  - 空のcatchブロックにログ追加
+  - デバッグ容易性向上
+
+#### データベース
+- [ ] **Mongooseスキーマにバリデーション追加** (`models/Conversation.ts`)
+  - `content` に `maxlength: 10000`
+  - `title` に `maxlength: 200`, `minlength: 1`
+
+- [ ] **データベースインデックス追加** (`models/Conversation.ts`)
+  - `userId` フィールド追加時にインデックス作成
+  - `{ userId: 1, updatedAt: -1 }` 複合インデックス
+
+#### パフォーマンス
+- [ ] **React.memo によるコンポーネント最適化**
+  - `MessageList` のメモ化
+  - `MessageItem` のメモ化
+  - 不要な再レンダリング防止
+
+- [ ] **コールバック依存関係の最適化** (`app/page.tsx:21-27`)
+  - `handleConversationCreated` の依存配列見直し
+
+- [ ] **自動スクロールの最適化** (`components/chat/MessageList.tsx:36-38`)
+  - 新規メッセージ追加時のみスクロール
+  - デバウンス処理の検討
+
+#### アクセシビリティ
+- [ ] **ConversationList のキーボードナビゲーション改善** (`components/sidebar/ConversationList.tsx:43-49`)
+  - フォーカスインジケーター追加
+  - ARIA属性の追加
+
+- [ ] **CodeBlock のアクセシビリティ** (`components/chat/CodeBlock.tsx:37-54`)
+  - `aria-label` の追加
+  - コピー完了の通知
+
+#### エラーハンドリング
+- [ ] **MarkdownRenderer のエラーバウンダリ** (`components/chat/MarkdownRenderer.tsx`)
+  - パースエラー時のフォールバックUI
+
+- [ ] **削除中のローディング状態** (`components/sidebar/ConversationList.tsx`)
+  - `isDeleting` ステート追加
+  - 重複クリック防止
+
+### 10.4 🟢 Low Priority（将来の改善）
+
+#### 型定義
+- [ ] **ApiError型の修正** (`types/index.ts:30-33`)
+  - `message` プロパティをオプショナルに
+  - `ApiResponse<T>` ジェネリック型追加
+
+- [ ] **ConversationInput型の追加** (`types/index.ts`)
+  - 作成時用の型定義
+
+#### UX改善
+- [ ] **サイドバーの空状態メッセージ改善** (`components/sidebar/ConversationList.tsx:22-27`)
+  - ヘルプテキスト追加
+  - 「New Chat」ボタンへの誘導
+
+- [ ] **会話リストのスケルトンローダー**
+  - 読み込み中の視覚的フィードバック
+
+- [ ] **エラーメッセージの詳細化** (`hooks/useConversations.ts:52-54`)
+  - 具体的なエラー原因の表示
+
+#### 機能追加
+- [ ] **会話タイトル編集機能**
+  - インライン編集UI
+  - PATCH APIエンドポイント
+
+- [ ] **メッセージ編集・削除機能**
+  - メッセージ単位のCRUD
+  - 編集履歴の保存（オプション）
+
+- [ ] **会話検索機能**
+  - 全文検索
+  - タイトル・メッセージ内容の検索
+
+- [ ] **会話エクスポート機能**
+  - JSON/Markdown/PDF形式
+  - バックアップ用途
+
+#### パフォーマンス（大規模対応）
+- [ ] **会話リストの仮想スクロール** (`components/sidebar/ConversationList.tsx`)
+  - react-window または react-virtualized
+  - 大量会話時のパフォーマンス改善
+
+#### テスト
+- [ ] **E2Eテストの追加**
+  - Playwright導入
+  - 主要ユーザーフローのテスト
+
+- [ ] **エラーシナリオのテスト追加**
+  - ネットワークエラー
+  - 不正レスポンス
+  - エッジケース
+
+---
+
+## 残タスク集計
+
+| 優先度 | 件数 | 説明 |
+|--------|------|------|
+| 🔴 Critical | 3 | セキュリティ・認証関連 |
+| 🟠 High | 5 | API検証・重要なバグ修正 |
+| 🟡 Medium | 11 | パフォーマンス・UX改善 |
+| 🟢 Low | 11 | 将来の機能追加・テスト |
+| **合計** | **30** | |
+
+---
+
+## 推奨実装順序
+
+1. **認証システム** → 全機能の前提条件
+2. **XSS対策・レート制限** → セキュリティ基盤
+3. **API入力検証** → データ整合性
+4. **確認ダイアログ・エラーハンドリング** → UX改善
+5. **パフォーマンス最適化** → スケーラビリティ
+6. **追加機能** → 機能拡張

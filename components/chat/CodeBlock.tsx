@@ -1,7 +1,7 @@
 "use client";
 
 import { Check, Copy } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
 import hljs from "highlight.js";
 import { Button } from "@/components/ui/button";
 
@@ -12,16 +12,12 @@ interface CodeBlockProps {
 
 export function CodeBlock({ language, code }: CodeBlockProps) {
   const [copied, setCopied] = useState(false);
-  const [highlightedCode, setHighlightedCode] = useState<string>("");
 
-  useEffect(() => {
+  const highlightedCode = useMemo(() => {
     if (language && hljs.getLanguage(language)) {
-      const result = hljs.highlight(code, { language });
-      setHighlightedCode(result.value);
-    } else {
-      const result = hljs.highlightAuto(code);
-      setHighlightedCode(result.value);
+      return hljs.highlight(code, { language }).value;
     }
+    return hljs.highlightAuto(code).value;
   }, [code, language]);
 
   const handleCopy = async () => {
