@@ -46,26 +46,25 @@ describe("ChatInput", () => {
     expect(input).toHaveValue("");
   });
 
-  it("sends message on Enter key", async () => {
+  it("sends message on Cmd/Ctrl+Enter", async () => {
     const user = userEvent.setup();
     const onSend = vi.fn();
     render(<ChatInput onSend={onSend} />);
 
     const input = screen.getByPlaceholderText("Send a message...");
-    await user.type(input, "Enter test{Enter}");
+    await user.type(input, "Cmd Enter test");
+    await user.keyboard("{Control>}{Enter}{/Control}");
 
-    expect(onSend).toHaveBeenCalledWith("Enter test", undefined);
+    expect(onSend).toHaveBeenCalledWith("Cmd Enter test", undefined);
   });
 
-  it("does not send on Shift+Enter", async () => {
+  it("does not send on Enter alone (allows new line)", async () => {
     const user = userEvent.setup();
     const onSend = vi.fn();
     render(<ChatInput onSend={onSend} />);
 
     const input = screen.getByPlaceholderText("Send a message...");
-    await user.type(input, "Line 1");
-    await user.keyboard("{Shift>}{Enter}{/Shift}");
-    await user.type(input, "Line 2");
+    await user.type(input, "Line 1{Enter}Line 2");
 
     expect(onSend).not.toHaveBeenCalled();
   });

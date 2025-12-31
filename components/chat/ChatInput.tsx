@@ -154,7 +154,8 @@ export function ChatInput({ onSend, disabled }: ChatInputProps) {
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
+    // Cmd/Ctrl + Enter to send
+    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
       e.preventDefault();
       handleSubmit();
     }
@@ -221,7 +222,7 @@ export function ChatInput({ onSend, disabled }: ChatInputProps) {
           </div>
         </div>
         <p className="mt-2 text-center text-xs text-zinc-500">
-          Press Enter to send, Shift+Enter for new line. Drop or paste images to attach.
+          Enter for new line, Cmd/Ctrl+Enter to send. Drop or paste images to attach.
         </p>
       </div>
     </div>
