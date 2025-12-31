@@ -1,7 +1,16 @@
+export interface ImageAttachment {
+  id: string;
+  type: "image";
+  mediaType: "image/jpeg" | "image/png" | "image/gif" | "image/webp";
+  data: string; // Base64 encoded
+  name?: string;
+}
+
 export interface Message {
   id: string;
   role: "user" | "assistant";
   content: string;
+  images?: ImageAttachment[];
   createdAt: Date;
 }
 
@@ -24,6 +33,7 @@ export interface ChatRequest {
   messages: Array<{
     role: "user" | "assistant";
     content: string;
+    images?: ImageAttachment[];
   }>;
 }
 

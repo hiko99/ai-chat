@@ -1,12 +1,50 @@
 "use client";
 
-import { User, Bot } from "lucide-react";
+import { User, Bot, ImageIcon } from "lucide-react";
 import { MarkdownRenderer } from "./MarkdownRenderer";
 import { cn } from "@/lib/utils";
 import type { Message } from "@/types";
 
 interface MessageItemProps {
   message: Message;
+}
+
+function MessageImages({ message }: { message: Message }) {
+  if (!message.images || message.images.length === 0) return null;
+
+  return (
+    <div className="mb-2 flex flex-wrap gap-2">
+      {message.images.map((image) => {
+        // Check if we have full image data or just a reference
+        const hasFullData = image.data && !image.data.endsWith("...");
+
+        if (hasFullData) {
+          return (
+            <div
+              key={image.id}
+              className="overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-700"
+            >
+              <img
+                src={`data:${image.mediaType};base64,${image.data}`}
+                alt={image.name || "Attached image"}
+                className="max-h-64 max-w-full object-contain"
+              />
+            </div>
+          );
+        }
+
+        // Show placeholder for truncated image references
+        return (
+          <div
+            key={image.id}
+            className="flex h-20 w-20 items-center justify-center rounded-lg border border-zinc-200 bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-800"
+          >
+            <ImageIcon className="h-8 w-8 text-zinc-400" />
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
 export function MessageItem({ message }: MessageItemProps) {
@@ -34,6 +72,7 @@ export function MessageItem({ message }: MessageItemProps) {
           {isUser ? "You" : "AI Assistant"}
         </div>
         <div className="text-zinc-900 dark:text-zinc-100">
+          <MessageImages message={message} />
           {isUser ? (
             <p className="whitespace-pre-wrap">{message.content}</p>
           ) : (

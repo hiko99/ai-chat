@@ -21,7 +21,7 @@ describe("ChatInput", () => {
     await user.type(input, "Hello, AI!");
     await user.click(screen.getByRole("button", { name: /send message/i }));
 
-    expect(onSend).toHaveBeenCalledWith("Hello, AI!");
+    expect(onSend).toHaveBeenCalledWith("Hello, AI!", undefined);
   });
 
   it("does not call onSend when input is empty", async () => {
@@ -54,7 +54,7 @@ describe("ChatInput", () => {
     const input = screen.getByPlaceholderText("Send a message...");
     await user.type(input, "Enter test{Enter}");
 
-    expect(onSend).toHaveBeenCalledWith("Enter test");
+    expect(onSend).toHaveBeenCalledWith("Enter test", undefined);
   });
 
   it("does not send on Shift+Enter", async () => {
@@ -87,6 +87,6 @@ describe("ChatInput", () => {
     await user.type(input, "  trimmed message  ");
     await user.click(screen.getByRole("button", { name: /send message/i }));
 
-    expect(onSend).toHaveBeenCalledWith("trimmed message");
+    expect(onSend).toHaveBeenCalledWith("trimmed message", undefined);
   });
 });

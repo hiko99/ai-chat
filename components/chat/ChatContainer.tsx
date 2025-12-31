@@ -3,13 +3,13 @@
 import { AlertCircle } from "lucide-react";
 import { MessageList } from "./MessageList";
 import { ChatInput } from "./ChatInput";
-import type { Message } from "@/types";
+import type { Message, ImageAttachment } from "@/types";
 
 interface ChatContainerProps {
   messages: Message[];
   isLoading: boolean;
   error?: string | null;
-  onSendMessage: (content: string) => void;
+  onSendMessage: (content: string, images?: ImageAttachment[]) => void;
 }
 
 export function ChatContainer({
@@ -18,12 +18,16 @@ export function ChatContainer({
   error,
   onSendMessage,
 }: ChatContainerProps) {
+  const handleSampleClick = (text: string) => {
+    onSendMessage(text);
+  };
+
   return (
     <div className="flex h-full flex-col">
       <MessageList
         messages={messages}
         isLoading={isLoading}
-        onSampleClick={onSendMessage}
+        onSampleClick={handleSampleClick}
       />
       {error && (
         <div className="mx-auto max-w-3xl px-4 pb-2">

@@ -7,17 +7,59 @@ import {
 } from "@/lib/anthropic";
 import connectToDatabase from "@/lib/mongodb";
 import Conversation from "@/models/Conversation";
-import type { MessageParam } from "@anthropic-ai/sdk/resources/messages";
+import type {
+  MessageParam,
+  ImageBlockParam,
+  TextBlockParam,
+} from "@anthropic-ai/sdk/resources/messages";
+import type { ImageAttachment } from "@/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+interface ChatMessage {
+  role: "user" | "assistant";
+  content: string;
+  images?: ImageAttachment[];
+}
+
 interface ChatRequestBody {
   conversationId: string | null;
-  messages: Array<{
-    role: "user" | "assistant";
-    content: string;
-  }>;
+  messages: ChatMessage[];
+}
+
+function buildMessageContent(
+  message: ChatMessage
+): string | (TextBlockParam | ImageBlockParam)[] {
+  // If no images, return simple string content
+  if (!message.images || message.images.length === 0) {
+    return message.content;
+  }
+
+  // Build multimodal content with images and text
+  const content: (TextBlockParam | ImageBlockParam)[] = [];
+
+  // Add images first
+  for (const image of message.images) {
+    content.push({
+      type: "image",
+      source: {
+        type: "base64",
+        media_type: image.mediaType,
+        data: image.data,
+      },
+    });
+  }
+
+  // Add text content if present
+  if (message.content) {
+    content.push({
+      type: "text",
+      text: message.content,
+    });
+  }
+
+  return content;
 }
 
 export async function POST(request: NextRequest) {
@@ -34,7 +76,7 @@ export async function POST(request: NextRequest) {
 
     const anthropicMessages: MessageParam[] = messages.map((msg) => ({
       role: msg.role,
-      content: msg.content,
+      content: buildMessageContent(msg),
     }));
 
     const stream = getAnthropicClient().messages.stream({
@@ -67,6 +109,17 @@ export async function POST(request: NextRequest) {
           if (conversationId) {
             await connectToDatabase();
             const userMessage = messages[messages.length - 1];
+
+            // Store images as references (without the full base64 data for storage efficiency)
+            const userImages = userMessage.images?.map((img) => ({
+              id: img.id,
+              type: img.type,
+              mediaType: img.mediaType,
+              // Store a truncated version for reference, full data is in the request
+              data: img.data.slice(0, 100) + "...",
+              name: img.name,
+            }));
+
             await Conversation.findByIdAndUpdate(
               conversationId,
               {
@@ -76,6 +129,7 @@ export async function POST(request: NextRequest) {
                       id: crypto.randomUUID(),
                       role: "user",
                       content: userMessage.content,
+                      images: userImages,
                       createdAt: new Date(),
                     },
                     {

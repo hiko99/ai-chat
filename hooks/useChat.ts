@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import type { Message } from "@/types";
+import type { Message, ImageAttachment } from "@/types";
 
 interface UseChatOptions {
   conversationId: string | null;
@@ -19,7 +19,7 @@ export function useChat({
   const [error, setError] = useState<string | null>(null);
 
   const sendMessage = useCallback(
-    async (content: string) => {
+    async (content: string, images?: ImageAttachment[]) => {
       setIsLoading(true);
       setError(null);
 
@@ -27,6 +27,7 @@ export function useChat({
         id: crypto.randomUUID(),
         role: "user",
         content,
+        images,
         createdAt: new Date(),
       };
 
@@ -60,6 +61,7 @@ export function useChat({
         const allMessages = [...messages, userMessage].map((msg) => ({
           role: msg.role,
           content: msg.content,
+          images: msg.images,
         }));
 
         const response = await fetch("/api/chat", {
