@@ -78,7 +78,7 @@ export function MessageList({ messages, isLoading, onSampleClick }: MessageListP
   }
 
   return (
-    <ScrollArea className="flex-1">
+    <ScrollArea className="min-h-0 flex-1">
       <div className="mx-auto max-w-3xl">
         {messages.map((message) => (
           <MessageItem key={message.id} message={message} />
